@@ -1,23 +1,5 @@
 (in-package :lc3)
 
-;; test ldb
-(mov r0 9)
-(mov r1 3)
-(ld r2 'instruction)
-(jsr 'ldb)
-(st r0 'instruction)
-;; test sign-extend
-(mov r0 3)
-(mov r1 4)
-(jsr 'sign-extend)
-(st r0 'negative-four)
-(trap #x25)
-
-(label instruction)
-(literal #b0001101010000011)
-(label negative-four)
-(literal 0)
-
 (procedure (ldb position size integer)
     ()
   (let ((scratch r3)
@@ -72,23 +54,3 @@
 (label shift-table)
 (loop for n below 16
       do (literal (ash 1 n)))
-
-(procedure (multiply x y)
-    ()
-  (let ((mask r3)
-        (product r4)
-        (scratch r5))
-    (mov mask 1)
-    (and product product 0)
-    ;; We test every bit in X to decide whether to add some product of
-    ;; Y or not.
-    (while (:negative :positive)
-      (and scratch mask x)
-      (polarity-case
-        ((:negative :positive)
-         (add product product y)))
-      (double y)
-      (double mask))
-    (mov r0 product)
-    (return)))
-    

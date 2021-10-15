@@ -13,19 +13,27 @@
                for label in label-names
                collect `(br ,conditions ',label))
        (br :always ',end-name)
-       ,@(loop for (nil . body) in cases
+       ,@(loop for (case . remaining) on cases
+               for (nil . body) = case
                for label in label-names
                collect `(label ,label)
                collect `(progn ,@body)
-               collect `(br :always ',end-name))
+               ;; Don't bother emitting a jump if this is the last
+               ;; case.
+               unless (null remaining)
+                 collect `(br :always ',end-name))
        (label ,end-name))))
 
 (defmacro while (condition &body body)
-  (with-gentemps (start)
+  (with-gentemps (start run end)
     `(progn
        (label ,start)
+       (br ,condition ',run)
+       (br :always ',end)
+       (label ,run)
        ,@body
-       (br ,condition ',start))))
+       (br :always ',start)
+       (label ,end))))
 
 (defmacro procedure ((name &rest arguments) (&rest locals) &body body)
   (with-gentemps (link)
