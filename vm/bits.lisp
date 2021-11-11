@@ -1,5 +1,7 @@
 (in-package :lc3)
 
+(comment "Bit diddling functions" :big t)
+
 (procedure (ldb position size integer)
     ()
   (let ((scratch r3)

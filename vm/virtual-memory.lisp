@@ -1,6 +1,6 @@
 (in-package :lc3)
 
-;; We have a virtual memory consisting of 256 pages of 256 words each.
+;; We have a virtual memory consisting of 16 pages of 256 words each.
 
 (procedure (read-word position)
     ((stashed-position 0)
