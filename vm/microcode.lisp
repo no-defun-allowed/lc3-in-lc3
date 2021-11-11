@@ -18,10 +18,12 @@
                  collect (gethash name *instruction-parts*)))
          (variables (reduce #'union parts :key #'part-variables :initial-value '())))
     `(progn
-       (procedure (,name)
+       (procedure (,name instruction)
            ((r 'registers)
+            (instruction 0)
             ,@(loop for name in variables
                     collect `(,name 0)))
+         (st r1 'instruction)
          ,@(loop for part in parts
                  collect (part-body part)))
        (setf (aref *handlers* ,instruction-number) ',name))))
@@ -134,6 +136,25 @@
 (define-instruction-part (:jump address)
   (ld r2 'address)
   (store-register r3 r2 *program-counter-offset*))
+
+(define-instruction-part (:jsr instruction register-1)
+  ;; Set link register
+  (load-register r0 *program-counter-offset*)
+  (store-register r2 r0 7)
+  (ld r0 'instruction)
+  (jsr 'bit-test)
+  (polarity-case
+    (:positive
+     ;; JSR
+     (signed-ldb-instruction 0 11)
+     (load-register r1 *program-counter-offset*)
+     (add r0 r1)
+     (store-register r1 r0 *program-counter-offset*))
+    (:zero
+     ;; JSRR
+     (ld r1 'register-1)
+     (load-register* r0 r1)
+     (store-register r2 r0 *program-counter-offset*))))
 
 (define-instruction-part (:load register-0 address)
   (ld r0 'address)

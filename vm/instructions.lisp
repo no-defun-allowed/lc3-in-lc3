@@ -9,7 +9,7 @@
 (define-instruction-handler add  1 :r0 :r1 :r2 :add)
 (define-instruction-handler ld   2 :r0 :pc-relative :load :register<-address)
 (define-instruction-handler st   3 :r0 :pc-relative :store)
-(define-instruction-handler jsr  4)      ; TODO: implement jsr
+(define-instruction-handler jsr  4 :r0 :r1 :jsr)      ; TODO: implement jsr
 (define-instruction-handler and  5 :r0 :r1 :r2 :and)
 (define-instruction-handler ldr  6 :r0 :r1 :effective-address :load :register<-address)
 (define-instruction-handler str  7 :r0 :r1 :effective-address :store)

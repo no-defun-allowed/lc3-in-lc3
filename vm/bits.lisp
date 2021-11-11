@@ -52,7 +52,15 @@
       ((:zero)
        (mov r0 integer)))
     (return)))
-  
+
+(procedure (bit-test integer position)
+    ()
+  (lea r2 'shift-table)
+  (add r2 r2 position)
+  (ldr r2 r2 0)
+  (and r0 integer r2)
+  (return))
+
 (label shift-table)
 (loop for n below 16
       do (literal (ash 1 n)))

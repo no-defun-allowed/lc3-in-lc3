@@ -1,5 +1,6 @@
 (in-package :lc3)
 
+(comment "Memory routines" :big t)
 ;; We have a virtual memory consisting of 16 pages of 256 words each.
 
 (procedure (read-word position)
@@ -42,7 +43,7 @@
   (polarity-case
     (:zero
      ;; Out of pages.
-     )
+     (br :always crash-and-burn))
     ((:negative :positive)
      ;; Still more pages, so grab this page and bump the pointer.
      (ld r1 'page-size)
@@ -66,14 +67,20 @@
   (ld r1 'ipage-table)
   (add r0 r0 r1)
   (ldr r0 r0 0)
-  (error "todo...")
   (polarity-case
     (:zero
      ;; Grab a page.
-     )
-    ((:negative :positive)
-     ;; Read from this page.
-     )))
+     (jsr 'allocate-page)))
+  ;; Now that we have a page, write to it.
+  (ld r1 'stashed-position)
+  (ld r2 'mask)
+  (and r1 r1 r2)
+  (add r0 r0 r1)
+  (ld r3 'stashed-value)
+  (str r3 r0 0)
+  (return))
+
+(comment "Virtual memory" :big t)
 
 (label next-page)
 (literal 'pages)      

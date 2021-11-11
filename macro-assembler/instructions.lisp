@@ -68,11 +68,14 @@
   `(format t "~&.blkw ~d" ,n))
 
 (defun mov (destination register-or-immediate)
-  (if (integerp register-or-immediate)
-      (progn
-        (and destination destination 0)
-        (add destination destination register-or-immediate))
-      (add destination register-or-immediate 0)))
+  (cond
+    ((eql register-or-immediate 0)
+     (and destination destination 0))
+    ((integerp register-or-immediate)
+     (and destination destination 0)
+     (add destination destination register-or-immediate))
+    (t
+     (add destination register-or-immediate 0))))
 
 (defun double (register)
   (add register register register))
