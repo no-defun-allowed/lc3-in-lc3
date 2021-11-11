@@ -87,3 +87,6 @@
   (format t "~&~a ~a"
           (if big ";;;;" ";;")
           text))
+
+(defun dot (text)
+  (format t "~&.~a" text))

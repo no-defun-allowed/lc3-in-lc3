@@ -1,31 +1,44 @@
 (in-package :lc3)
 
-(defstruct part
-  body
-  variables)
+;;; Note that rN refers to a register of the host VM, and register-N
+;;; refers something to do with a register of the guest VM.
+
+(defvar *program-counter-offset* 8)
+(defvar *flag-register-offset* 9)
+
 (defvar *instruction-parts* (make-hash-table))
+(defvar *variables-used* '())
+
 (defmacro define-instruction-part ((name &rest variables) &body body)
-  `(setf (gethash ',name *instruction-parts*)
-         (make-part :body '(progn ,@body)
-                    :variables ',variables)))
+  (let ((label-name (alexandria:format-symbol t "~a-PART" name)))
+    `(progn
+       (progn
+         (label ,label-name)
+         (st r7 'microcode-link)
+         ,@body
+         (ld r7 'microcode-link)
+         (ret))
+       (setf (gethash ',name *instruction-parts*)
+             ',label-name
+             *variables-used*
+             (union *variables-used* ',variables)))))
+
 (defvar *handlers* (make-array 16))
 
 (defmacro define-instruction-handler (name instruction-number &rest parts)
   (declare (ignore name))
-  (let* ((name (alexandria:format-symbol t "INSTRUCTION-~d" instruction-number))
-         (parts
-           (loop for name in parts
-                 collect (gethash name *instruction-parts*)))
-         (variables (reduce #'union parts :key #'part-variables :initial-value '())))
+  (let ((name  (alexandria:format-symbol t "INSTRUCTION-~d" instruction-number))
+        (stash (alexandria:format-symbol t "STASH-~d" instruction-number)))
     `(progn
        (procedure (,name instruction)
-           ((r 'registers)
-            (instruction 0)
-            ,@(loop for name in variables
-                    collect `(,name 0)))
-         (st r1 'instruction)
+           ((,stash 0))
+         (st instruction ',stash)
          ,@(loop for part in parts
-                 collect (part-body part)))
+                 for label = (gethash part *instruction-parts*)
+                 collect `(progn
+                            (ld r0 ',stash)
+                            (jsr ',label)))
+         (return))
        (setf (aref *handlers* ,instruction-number) ',name))))
 
 (defun ldb-instruction (position size)
@@ -40,22 +53,27 @@
   (jsr 'sign-extend))
 
 (defun load-register (target constant-number)
-  (ld target 'r)
+  (lea target 'registers)
   (ldr target target constant-number))
 (defun store-register (scratch value constant-number)
-  (ld scratch 'r)
+  (lea scratch 'registers)
   (str value scratch constant-number))
 (defun load-register* (target register)
   (assert (cl:not (eql target register)))
-  (ld target 'r)
+  (lea target 'registers)
   (add target target register)
   (ldr target target 0))
 (defun store-register* (scratch value register)
   (assert (cl:and (cl:not (eql scratch register))
                   (cl:not (eql value register))))
-  (ld scratch 'r)
+  (lea scratch 'registers)
   (add scratch scratch register)
   (str value scratch 0))
+
+(comment "Microcode" :big t)
+
+(label microcode-link)
+(literal 0)
 
 (define-instruction-part (:r0 instruction register-0)
   (ldb-instruction 9 3)
@@ -148,7 +166,7 @@
      ;; JSR
      (signed-ldb-instruction 0 11)
      (load-register r1 *program-counter-offset*)
-     (add r0 r1)
+     (add r0 r0 r1)
      (store-register r1 r0 *program-counter-offset*))
     (:zero
      ;; JSRR
@@ -162,7 +180,7 @@
   (ld r1 'register-0)
   (st r0 'address))
 
-(define-instruction-part (:register<-address register-0 address)
+(define-instruction-part (:register-address register-0 address)
   (ld r1 'address)
   (ld r0 'register-0)
   (store-register* r2 r1 r0))
@@ -183,4 +201,8 @@
      (mov r1 #b010))
     (:negative
      (mov r1 #b100)))
-  (store-register* r2 r1 r0))
+  (store-register r2 r1 *flag-register-offset*))
+
+(define-instruction-part (:crash)
+  (label crash-loop)
+  (br :always 'crash-loop))

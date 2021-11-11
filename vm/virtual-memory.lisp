@@ -20,6 +20,7 @@
   ;; Is page allocated? If so, return zero, else read page.
   (polarity-case
     (:zero
+     ;; r0 is already zero.
      (return))
     ((:negative :positive)
      ;; Compute offset into table.
@@ -43,7 +44,8 @@
   (polarity-case
     (:zero
      ;; Out of pages.
-     (br :always crash-and-burn))
+     (label spin)
+     (br :always 'spin))
     ((:negative :positive)
      ;; Still more pages, so grab this page and bump the pointer.
      (ld r1 'page-size)
@@ -91,3 +93,6 @@
 (label pages)
 (words (* 16 256))
 (label end-of-pages)
+
+(label initial-program-counter)
+(literal #x3000)

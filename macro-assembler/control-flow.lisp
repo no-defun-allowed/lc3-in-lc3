@@ -38,10 +38,13 @@
 (defmacro procedure ((name &rest arguments) (&rest locals) &body body)
   (with-gentemps (link)
     `(progn
-       (label ,name)
+       ,(if (null name)
+            `(progn)
+            `(label ,name))
        (let ,(loop for argument in arguments
                    for register in *registers*
                    collect (list argument register))
+         (declare (ignorable ,@arguments))
          (st r7 ',link)
          (macrolet ((return ()
                       (list 'progn

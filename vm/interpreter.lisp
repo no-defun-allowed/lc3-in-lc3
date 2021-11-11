@@ -9,14 +9,20 @@
   ;; the machine is specified anywhere?
   (mov r0 2)
   (store-register r2 r0 *flag-register-offset*)
-  (ld r0 'pc)
-  (store-register r2 r0 *program-counter-offset*))
+  (ldi r0 'pc)
+  (store-register r2 r0 *program-counter-offset*)
+  (return))
 
 (procedure (interpret)
-    ((instruction 0)
-     (h 'handler-table)) 
+    ((h 'handler-table))
   (label again)
-  (load-register r0 *program-counter-offset*)
+  (ld r3 'r)
+  (add r3 r3 *program-counter-offset*)
+  ;; Load and update PC
+  (ldr r0 r3 0)
+  (add r1 r0 2)
+  (str r1 r3 0)
+  ;; Fetch instruction
   (jsr 'read-word)
   (st r0 'instruction)
   ;; Get instruction number
@@ -27,5 +33,6 @@
   ;; Call handler
   (ld r1 'h)
   (add r0 r0 r1)
+  (ldr r0 r0 0)
   (jsrr r0)
-  (jmp 'again))
+  (br :always 'again))
