@@ -1,6 +1,6 @@
 (in-package :lc3)
 
-(defun build-vm ()
+(defun build-vm (pathname)
   (dot "orig x3000")
   (jsr 'setup)
   (jsr 'interpret)
@@ -9,4 +9,6 @@
   (load "instructions")
   (load "interpreter")
   (load "virtual-memory")
+  (load "image")
+  (read-image pathname)
   (dot "end"))

@@ -1,3 +1,8 @@
 *~
 *.fasl
 \#*\#
+tests/*.hex
+tests/*.lst
+tests/*.obj
+tests/*.sym
+tests/*.bin

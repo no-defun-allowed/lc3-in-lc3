@@ -96,7 +96,7 @@
 
 (define-instruction-part (:effective-address register-1 address)
   ;; load offset from instruction
-  (signed-ldb-instruction 6 0)
+  (signed-ldb-instruction 0 6)
   ;; load base from register
   (ld r2 'register-1)
   (load-register* r1 r2)
@@ -106,7 +106,7 @@
 
 (define-instruction-part (:pc-relative address)
   ;; load offset from instruction
-  (signed-ldb-instruction 9 0)
+  (signed-ldb-instruction 0 9)
   ;; load PC
   (load-register r1 *program-counter-offset*)
   ;; add
@@ -115,7 +115,7 @@
 
 (define-instruction-part (:branch address)
   ;; load mask from instruction
-  (ldb-instruction 3 9)
+  (ldb-instruction 9 3)
   ;; load flags register
   (load-register r1 *flag-register-offset*)
   ;; test mask
@@ -204,5 +204,4 @@
   (store-register r2 r1 *flag-register-offset*))
 
 (define-instruction-part (:crash)
-  (label crash-loop)
-  (br :always 'crash-loop))
+  (trap #x25))

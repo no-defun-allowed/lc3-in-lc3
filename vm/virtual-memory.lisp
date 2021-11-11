@@ -5,8 +5,7 @@
 
 (procedure (read-word position)
     ((stashed-position 0)
-     (mask #xff)
-     (ipage-table 'page-table))
+     (mask #xff))
   ;; Compute page number.
   (st position 'stashed-position)
   (mov r2 position)
@@ -14,7 +13,7 @@
   (mov r0 8)
   (jsr 'ldb)
   ;; Load from page table.
-  (ld r1 'ipage-table)
+  (lea r1 'page-table)
   (add r0 r0 r1)
   (ldr r0 r0 0)
   ;; Is page allocated? If so, return zero, else read page.
@@ -33,31 +32,17 @@
      (return))))
 
 (procedure (allocate-page)
-    ((inext-page 'next-page)
-     (iend-of-pages 'end-of-pages)
-     (page-size 256))
-  ;; A = B <=> (A and ¬B) = 0
-  (ldi r0 'inext-page)
-  (ldi r1 'iend-of-pages)
-  (not r1 r1)
-  (and r1 r0 r0)
-  (polarity-case
-    (:zero
-     ;; Out of pages.
-     (label spin)
-     (br :always 'spin))
-    ((:negative :positive)
-     ;; Still more pages, so grab this page and bump the pointer.
-     (ld r1 'page-size)
-     (add r1 r1 r0)
-     (sti r1 'inext-page)
-     (return))))
+    ((page-size 256))
+  (ld r0 'next-page)
+  (ld r1 'page-size)
+  (add r1 r1 r0)
+  (st r1 'next-page)
+  (return))
 
 (procedure (write-word position value)
     ((stashed-position 0)
      (stashed-value 0)
-     (mask #xff)
-     (ipage-table 'page-table))
+     (mask #xff))
   ;; Compute page number.
   (st position 'stashed-position)
   (st value 'stashed-value)
@@ -66,7 +51,7 @@
   (mov r0 8)
   (jsr 'ldb)
   ;; Load from page table.
-  (ld r1 'ipage-table)
+  (lea r1 'page-table)
   (add r0 r0 r1)
   (ldr r0 r0 0)
   (polarity-case
@@ -81,18 +66,3 @@
   (ld r3 'stashed-value)
   (str r3 r0 0)
   (return))
-
-(comment "Virtual memory" :big t)
-
-(label next-page)
-(literal 'pages)      
-            
-(label page-table)
-(words 256)
-
-(label pages)
-(words (* 16 256))
-(label end-of-pages)
-
-(label initial-program-counter)
-(literal #x3000)

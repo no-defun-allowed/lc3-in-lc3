@@ -20,7 +20,7 @@
   (add r3 r3 *program-counter-offset*)
   ;; Load and update PC
   (ldr r0 r3 0)
-  (add r1 r0 2)
+  (add r1 r0 1)
   (str r1 r3 0)
   ;; Fetch instruction
   (jsr 'read-word)

@@ -2,7 +2,7 @@
 
 (defun format-assembler-value (value)
   (etypecase value
-    (symbol
+    ((or symbol string)
      (substitute #\_ #\- (string-downcase value)))
     (integer
      (format nil "#~d" value))))
