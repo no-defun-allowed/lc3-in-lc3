@@ -4,6 +4,7 @@ loop    LEA R0, hello    ; R0 = &hello
         LD R1, hello
         ADD R1, R1, #1
         ST R1, hello
-        BR loop
+        BRp loop
+        TRAP 0x25        ; HALT
 hello   .stringz "Hello World!"
         .end
