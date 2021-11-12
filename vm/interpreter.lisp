@@ -5,6 +5,11 @@
 (procedure (setup)
     ((r 'registers)
      (pc 'initial-program-counter))
+  ;; Write out herald
+  (lea r0 'herald)
+  (trap #x22)
+  (mov r0 (char-code #\Newline))
+  (trap #x21)
   ;; Set the zero flag at startup. I don't think the initial state of
   ;; the machine is specified anywhere?
   (mov r0 2)
@@ -45,3 +50,6 @@
   (increment r0)
   (st r0 'next-part)
   (br :always 'continue-reading-parts))
+
+(label herald)
+(dot "stringz \"lc3-lc3 by Hayley Patton\"")
