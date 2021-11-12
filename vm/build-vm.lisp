@@ -8,6 +8,7 @@
   (load "microcode")
   (load "instructions")
   (load "interpreter")
+  (load "traps")
   (load "virtual-memory")
   (load "image")
   (read-image pathname)

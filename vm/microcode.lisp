@@ -86,13 +86,14 @@
 (define-instruction-part (:r2 instruction immediate-p immediate register-2)
   (ldb-instruction 5 1)
   (st r0 'immediate-p)
-  (polarity-case
-    (:positive
-     (signed-ldb-instruction 0 5)
-     (st r0 'immediate))
-    (:zero
-     (ldb-instruction 0 3)
-     (st r0 'register-2))))
+  (br :positive 'no-immediate-r2)
+  (signed-ldb-instruction 0 5)
+  (st r0 'immediate)
+  (br :always 'done-with-r2)
+  (label no-immediate-r2)
+  (ldb-instruction 0 3)
+  (st r0 'register-2)
+  (label done-with-r2))
 
 (define-instruction-part (:effective-address register-1 address)
   ;; load offset from instruction
@@ -120,10 +121,10 @@
   (load-register r1 *flag-register-offset*)
   ;; test mask
   (and r0 r0 r1)
-  (polarity-case
-    (:positive
-     (ld r2 'address)
-     (store-register r3 r2 *program-counter-offset*))))
+  (br :zero 'no-branch)
+  (ld r2 'address)
+  (store-register r3 r2 *program-counter-offset*)
+  (label no-branch))
 
 (macrolet ((frob (asm part)
              `(define-instruction-part (,part immediate-p immediate
@@ -161,18 +162,19 @@
   (store-register r2 r0 7)
   (ld r0 'instruction)
   (jsr 'bit-test)
-  (polarity-case
-    (:positive
-     ;; JSR
-     (signed-ldb-instruction 0 11)
-     (load-register r1 *program-counter-offset*)
-     (add r0 r0 r1)
-     (store-register r1 r0 *program-counter-offset*))
-    (:zero
-     ;; JSRR
-     (ld r1 'register-1)
-     (load-register* r0 r1)
-     (store-register r2 r0 *program-counter-offset*))))
+  (br :zero 'do-jsrr)
+  ;; JSR
+  (signed-ldb-instruction 0 11)
+  (load-register r1 *program-counter-offset*)
+  (add r0 r0 r1)
+  (store-register r1 r0 *program-counter-offset*)
+  (br :always 'finish-jsr)
+  (label do-jsrr)
+  ;; JSRR
+  (ld r1 'register-1)
+  (load-register* r0 r1)
+  (store-register r2 r0 *program-counter-offset*)
+  (label finish-jsr))
 
 (define-instruction-part (:load register-0 address)
   (ld r0 'address)
@@ -194,14 +196,22 @@
 (define-instruction-part (:update-flags register-0)
   (ld r0 'register-0)
   (load-register* r1 r0)
+  (and r1 r1 0)
   (polarity-case
     (:positive
-     (mov r1 #b001))
+     (add r1 r1 #b001))
     (:zero
-     (mov r1 #b010))
+     (add r1 r1 #b010))
     (:negative
-     (mov r1 #b100)))
+     (add r1 r1 #b100)))
   (store-register r2 r1 *flag-register-offset*))
+
+(define-instruction-part (:trap instruction)
+  (ld r0 'instruction)
+  (and r0 r0 7)
+  (lea r1 'trap-vector)
+  (add r1 r1 r0)
+  (jsrr r1))
 
 (define-instruction-part (:crash)
   (trap #x25))
