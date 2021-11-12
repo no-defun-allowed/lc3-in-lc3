@@ -164,6 +164,7 @@
   (ld r0 'instruction)
   (mov r1 11)
   (jsr 'bit-test)
+  (add r0 r0 0)                         ; prime flags
   (br :zero 'do-jsrr)
   ;; JSR
   (signed-ldb-instruction 0 11)
