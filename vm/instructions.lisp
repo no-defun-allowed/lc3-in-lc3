@@ -1,17 +1,5 @@
 (in-package :lc3)
 
-(comment "Machine state" :big t)
-
-(label registers)
-(words 10)
-
-(macrolet ((frob ()
-             `(progn
-                ,@(loop for variable in *variables-used*
-                        collect `(label ,variable)
-                        collect `(literal 0)))))
-  (frob))
-
 (comment "Instructions" :big t)
 
 (define-instruction-handler br    0 :pc-relative :branch)
@@ -29,7 +17,7 @@
 (define-instruction-handler jmp  12 :pc-relative :jump)
 (define-instruction-handler res  13 :crash)
 (define-instruction-handler lea  14 :r0 :pc-relative :register-address :update-flags)
-(define-instruction-handler trap 15 :crash)
+(define-instruction-handler trap 15 :trap)
 
 (label handler-table)
 (loop for label across *handlers*

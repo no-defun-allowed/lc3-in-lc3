@@ -129,7 +129,7 @@
                   (:positive
                    (ld r2 'immediate))
                   ;; load "immediate" from R2
-                  (:zero
+                  ((:negative :zero)
                    (ld r3 'register-2)
                    (load-register* r2 r3)))
                 (ld r3 'register-1)
@@ -156,6 +156,7 @@
   (load-register r0 *program-counter-offset*)
   (store-register r2 r0 7)
   (ld r0 'instruction)
+  (mov r1 11)
   (jsr 'bit-test)
   (br :zero 'do-jsrr)
   ;; JSR
@@ -164,8 +165,8 @@
   (add r0 r0 r1)
   (store-register r1 r0 *program-counter-offset*)
   (br :always 'finish-jsr)
-  (label do-jsrr)
   ;; JSRR
+  (label do-jsrr)
   (ld r1 'register-1)
   (load-register* r0 r1)
   (store-register r2 r0 *program-counter-offset*)
@@ -207,6 +208,7 @@
   (and r0 r0 7)
   (lea r1 'trap-vector)
   (add r1 r1 r0)
+  (ldr r1 r1 0)
   (jsrr r1))
 
 (define-instruction-part (:crash)

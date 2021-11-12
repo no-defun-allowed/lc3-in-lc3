@@ -32,6 +32,7 @@
   (st r0 'next-address)
   (label continue-puts)
   (jsr 'read-word)
+  (mov r0 r0)
   (polarity-case
     (:zero (return)))
   (trap #x21)
