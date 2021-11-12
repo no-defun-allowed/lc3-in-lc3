@@ -5,7 +5,16 @@
 
 (procedure (read-word position)
     ((stashed-position 0)
-     (mask #xff))
+     (mask #xff)
+     (device-and-mask #xff00)
+     (device-inv-mask #x-fe00))
+  ;; Check if this is a device address.
+  (ld r3 'device-and-mask)
+  (and r3 r3 position)
+  (ld r4 'device-inv-mask)
+  (add r4 r4 r3)
+  ;; If -(POSITION and #xFF00) + #xFE00 = 0, then #xFE00 <= POSITION < #xFF00
+  (br :zero 'read-device)
   ;; Compute page number.
   (st position 'stashed-position)
   (mov r2 position)
@@ -29,7 +38,11 @@
      (add r0 r0 r1)
      ;; Finally load from physical memory. 
      (ldr r0 r0 0)
-     (return))))
+     (return)))
+  (label read-device)
+  ;; Pass through device memory from the VM.
+  (ldr r0 position 0)
+  (return))
 
 (procedure (allocate-page)
     ((page-size 256))
@@ -52,12 +65,14 @@
   (jsr 'ldb)
   ;; Load from page table.
   (lea r1 'page-table)
-  (add r0 r0 r1)
-  (ldr r0 r0 0)
+  (add r4 r0 r1)
+  (ldr r0 r4 0)
   (polarity-case
     (:zero
      ;; Grab a page.
-     (jsr 'allocate-page)))
+     (jsr 'allocate-page)
+     ;; Install it into the page table.
+     (str r0 r4 0)))
   ;; Now that we have a page, write to it.
   (ld r1 'stashed-position)
   (ld r2 'mask)

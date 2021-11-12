@@ -9,14 +9,18 @@
 (defvar *instruction-parts* (make-hash-table))
 (defvar *variables-used* '())
 
-(defmacro define-instruction-part ((name &rest variables) &body body)
+(defmacro define-instruction-part ((name link? &rest variables) &body body)
   (let ((label-name (alexandria:format-symbol t "~a-PART" name)))
     `(progn
        (progn
          (label ,label-name)
-         (st r7 'microcode-link)
+         ,(if link?
+              `(st r7 'microcode-link)
+              `(progn))
          ,@body
-         (ld r7 'microcode-link)
+         ,(if link?
+              `(ld r7 'microcode-link)
+              `(progn))
          (ret))
        (setf (gethash ',name *instruction-parts*)
              ',label-name
@@ -70,15 +74,15 @@
 (label microcode-link)
 (literal 0)
 
-(define-instruction-part (:r0 instruction register-0)
+(define-instruction-part (:r0 t instruction register-0)
   (ldb-instruction 9 3)
   (st r0 'register-0))
 
-(define-instruction-part (:r1 instruction register-1)
+(define-instruction-part (:r1 t instruction register-1)
   (ldb-instruction 6 3)
   (st r0 'register-1))
 
-(define-instruction-part (:r2 instruction immediate-p immediate register-2)
+(define-instruction-part (:r2 t instruction immediate-p immediate register-2)
   (ldb-instruction 5 1)
   (st r0 'immediate-p)
   (br :zero 'no-immediate-r2)
@@ -90,7 +94,7 @@
   (st r0 'register-2)
   (label done-with-r2))
 
-(define-instruction-part (:effective-address register-1 address)
+(define-instruction-part (:effective-address t register-1 address)
   ;; load offset from instruction
   (signed-ldb-instruction 0 6)
   ;; load base from register
@@ -100,7 +104,7 @@
   (add r0 r0 r1)
   (st r0 'address))
 
-(define-instruction-part (:pc-relative address)
+(define-instruction-part (:pc-relative t address)
   ;; load offset from instruction
   (signed-ldb-instruction 0 9)
   ;; load PC
@@ -109,7 +113,7 @@
   (add r0 r0 r1)
   (st r0 'address))
 
-(define-instruction-part (:branch address)
+(define-instruction-part (:branch t address)
   ;; load mask from instruction
   (ldb-instruction 9 3)
   ;; load flags register
@@ -122,7 +126,7 @@
   (label no-branch))
 
 (macrolet ((frob (asm part)
-             `(define-instruction-part (,part immediate-p immediate
+             `(define-instruction-part (,part nil immediate-p immediate
                                               register-0 register-1 register-2)
                 (ld r0 'immediate-p)
                 (polarity-case
@@ -140,18 +144,19 @@
   (frob add :add)
   (frob and :and))
 
-(define-instruction-part (:not register-0 register-1)
+(define-instruction-part (:not nil register-0 register-1)
   (ld r1 'register-1)
   (load-register* r0 r1)
   (not r0 r0)
   (ld r1 'register-0)
   (store-register* r2 r0 r1))
 
-(define-instruction-part (:jump address)
-  (ld r2 'address)
-  (store-register r3 r2 *program-counter-offset*))
+(define-instruction-part (:jump nil register-1)
+  (ld r1 'register-1)
+  (load-register* r0 r1)
+  (store-register r1 r0 *program-counter-offset*))
 
-(define-instruction-part (:jsr instruction register-1)
+(define-instruction-part (:jsr t instruction register-1)
   ;; Set link register
   (load-register r0 *program-counter-offset*)
   (store-register r2 r0 7)
@@ -172,24 +177,23 @@
   (store-register r2 r0 *program-counter-offset*)
   (label finish-jsr))
 
-(define-instruction-part (:load register-0 address)
+(define-instruction-part (:load t address)
   (ld r0 'address)
   (jsr 'read-word)
-  (ld r1 'register-0)
   (st r0 'address))
 
-(define-instruction-part (:register-address register-0 address)
+(define-instruction-part (:register-address nil register-0 address)
   (ld r1 'address)
   (ld r0 'register-0)
   (store-register* r2 r1 r0))
 
-(define-instruction-part (:store register-0 address)
+(define-instruction-part (:store t register-0 address)
   (ld r0 'register-0)
   (load-register* r1 r0)
   (ld r0 'address)
   (jsr 'write-word))
 
-(define-instruction-part (:update-flags register-0)
+(define-instruction-part (:update-flags nil register-0)
   (ld r0 'register-0)
   (load-register* r2 r0)
   (and r1 r1 0)
@@ -203,7 +207,7 @@
      (add r1 r1 #b100)))
   (store-register r2 r1 *flag-register-offset*))
 
-(define-instruction-part (:trap instruction)
+(define-instruction-part (:trap t instruction)
   (ld r0 'instruction)
   (and r0 r0 7)
   (lea r1 'trap-vector)
@@ -211,5 +215,5 @@
   (ldr r1 r1 0)
   (jsrr r1))
 
-(define-instruction-part (:crash)
+(define-instruction-part (:crash nil)
   (trap #x25))

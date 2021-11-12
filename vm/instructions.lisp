@@ -14,7 +14,7 @@
 (define-instruction-handler not   9 :r0 :r1 :not :update-flags)
 (define-instruction-handler ldi  10 :r0 :pc-relative :load :load :register-address :update-flags)
 (define-instruction-handler sti  11 :r0 :pc-relative :load :store)
-(define-instruction-handler jmp  12 :pc-relative :jump)
+(define-instruction-handler jmp  12 :r1 :jump)
 (define-instruction-handler res  13 :crash)
 (define-instruction-handler lea  14 :r0 :pc-relative :register-address :update-flags)
 (define-instruction-handler trap 15 :trap)
