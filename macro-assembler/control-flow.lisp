@@ -7,12 +7,18 @@
 
 (defmacro polarity-case (&body cases)
   (let ((label-names (loop for nil in cases collect (gentemp "CASE")))
-        (end-name (gentemp "END")))
+        (end-name (gentemp "END"))
+        (remaining '(:positive :negative :zero)))
     `(progn
        ,@(loop for (conditions . nil) in cases
                for label in label-names
-               collect `(br ,conditions ',label))
-       (br :always ',end-name)
+               collect `(br ,conditions ',label)
+               do (setf remaining
+                        (set-difference remaining
+                                        (alexandria:ensure-list conditions))))
+       ,(if (null remaining)
+            `(progn)
+            `(br :always ',end-name))
        ,@(loop for (case . remaining) on cases
                for (nil . body) = case
                for label in label-names

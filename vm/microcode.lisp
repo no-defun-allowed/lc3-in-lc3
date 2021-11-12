@@ -27,18 +27,13 @@
 
 (defmacro define-instruction-handler (name instruction-number &rest parts)
   (declare (ignore name))
-  (let ((name  (alexandria:format-symbol t "INSTRUCTION-~d" instruction-number))
-        (stash (alexandria:format-symbol t "STASH-~d" instruction-number)))
+  (let ((name (alexandria:format-symbol t "INSTRUCTION-~d" instruction-number)))
     `(progn
-       (procedure (,name instruction)
-           ((,stash 0))
-         (st instruction ',stash)
-         ,@(loop for part in parts
-                 for label = (gethash part *instruction-parts*)
-                 collect `(progn
-                            (ld r0 ',stash)
-                            (jsr ',label)))
-         (return))
+       (label ,name)
+       ,@(loop for part in parts
+               for label = (gethash part *instruction-parts*)
+               collect `(literal ',label))
+       (literal 0)
        (setf (aref *handlers* ,instruction-number) ',name))))
 
 (defun ldb-instruction (position size)
@@ -86,7 +81,7 @@
 (define-instruction-part (:r2 instruction immediate-p immediate register-2)
   (ldb-instruction 5 1)
   (st r0 'immediate-p)
-  (br :positive 'no-immediate-r2)
+  (br :zero 'no-immediate-r2)
   (signed-ldb-instruction 0 5)
   (st r0 'immediate)
   (br :always 'done-with-r2)
@@ -195,8 +190,9 @@
 
 (define-instruction-part (:update-flags register-0)
   (ld r0 'register-0)
-  (load-register* r1 r0)
+  (load-register* r2 r0)
   (and r1 r1 0)
+  (add r2 r2 0)                         ; prime flags
   (polarity-case
     (:positive
      (add r1 r1 #b001))

@@ -14,7 +14,8 @@
   (return))
 
 (procedure (interpret)
-    ((h 'handler-table))
+    ((h 'handler-table)
+     (next-part 0))
   (label again)
   (ld r3 'r)
   (add r3 r3 *program-counter-offset*)
@@ -30,9 +31,17 @@
   (mov r0 12)
   (mov r1 4)
   (jsr 'ldb)
-  ;; Call handler
+  ;; Run stream for handler
   (ld r1 'h)
   (add r0 r0 r1)
   (ldr r0 r0 0)
+  (st r0 'next-part)
+  (label continue-reading-parts)
+  (ldi r0 'next-part)
+  ;; Streams finish with a zero
+  (br :zero 'again)
   (jsrr r0)
-  (br :always 'again))
+  (ld r0 'next-part)
+  (increment r0)
+  (st r0 'next-part)
+  (br :always 'continue-reading-parts))
