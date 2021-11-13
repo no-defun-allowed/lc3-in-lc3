@@ -5,6 +5,12 @@
                collect `(,name (gentemp ,(symbol-name name))))
      ,@body))
 
+(defmacro with-skip ((name) &body body)
+  (let ((label (gentemp "SKIP")))
+    `(let ((,name ',label))
+       ,@body
+       (label ,label))))
+
 (defmacro polarity-case (&body cases)
   (let ((label-names (loop for nil in cases collect (gentemp "CASE")))
         (end-name (gentemp "END"))

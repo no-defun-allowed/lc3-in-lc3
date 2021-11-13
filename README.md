@@ -13,3 +13,10 @@ guide](https://justinmeiners.github.io/lc3-vm/), specifically the C++
 template part. However, as code density is important with LC-3 and its
 tiny PC-relative ranges, we instead have each "part" be compiled exactly
 once, with threaded "microcode" sequencing parts.
+
+
+We also handle the problem of fitting one 64 kiloword memory space
+into another with a simple virtual memory system, which pages into the
+host only when a page is written to. There is also a translation
+lookaside buffer with only one entry, which avoids calling `ldb` most
+of the time.

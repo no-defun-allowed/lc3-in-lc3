@@ -83,6 +83,9 @@
   (add register register 1))
 (defun decrement (register)
   (add register register -1))
+(defun negate (target source)
+  (not target source)
+  (increment target))
 (defun comment (text &key (big nil))
   (format t "~&~a ~a"
           (if big ";;;;" ";;")
