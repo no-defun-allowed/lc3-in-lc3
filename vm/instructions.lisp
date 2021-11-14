@@ -6,7 +6,7 @@
 (define-instruction-handler add   1 :r0 :r1 :r2 :add :update-flags)
 (define-instruction-handler ld    2 :r0 :pc-relative :load :register-address :update-flags)
 (define-instruction-handler st    3 :r0 :pc-relative :store)
-(define-instruction-handler jsr   4 :r0 :r1 :jsr)
+(define-instruction-handler jsr   4 :r1 :jsr)
 (define-instruction-handler and   5 :r0 :r1 :r2 :and :update-flags)
 (define-instruction-handler ldr   6 :r0 :r1 :effective-address :load :register-address :update-flags)
 (define-instruction-handler str   7 :r0 :r1 :effective-address :store)
