@@ -20,7 +20,6 @@
   ;; Check for TLB hit.
   (ld r3 'device-and-mask)
   (and r3 r3 position)
-  (negate r3 r3)
   (ld r4 'tlb-address)
   (add r3 r3 r4)
   (br :zero 'read-tlb-hit)
@@ -43,6 +42,7 @@
      ;; Write to TLB.
      (ld r4 'device-and-mask)
      (and r4 r4 r2)
+     (negate r4 r4)
      (st r4 'tlb-address)
      (st r0 'tlb-result)
      ;; Compute offset into table.
@@ -80,7 +80,6 @@
   ;; Check for TLB hit.
   (ld r3 'device-and-mask)
   (and r3 r3 position)
-  (negate r3 r3)
   (ld r4 'tlb-address)
   (add r3 r3 r4)
   (br :zero 'write-tlb-hit)
@@ -105,6 +104,7 @@
   (ld r4 'device-and-mask)
   (ld r2 'stashed-position)
   (and r4 r4 r2)
+  (negate r4 r4)
   (st r4 'tlb-address)
   (st r0 'tlb-result)
   ;; Now write to the page.
