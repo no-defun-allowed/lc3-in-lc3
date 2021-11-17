@@ -3,7 +3,10 @@
 (comment "Bit diddling functions" :big t)
 
 (procedure (ldb position size integer)
-    ()
+           ()
+  ;; Check if position = 0
+  (add position position 0)
+  (br :zero 'ldb-position-zero)
   (let ((scratch r3)
         (destination-mask r4)
         (source-mask r5)
@@ -27,7 +30,16 @@
       (double destination-mask)
       (decrement size))
     (mov r0 result)
-    (return)))
+    (return))
+  (label ldb-position-zero)
+  ;; Load mask for SIZE
+  (lea r3 'shift-table)
+  (add r3 r3 size)
+  (ldr r3 r3 0)
+  ;; Subtract 1 to get mask for SIZE
+  (add r3 r3 -1)
+  (and r0 r2 r3)
+  (return))
 
 (procedure (sign-extend bits integer)
     ()
